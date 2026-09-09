@@ -366,7 +366,7 @@ function sectionForm() {
                 ${field("attestationLegalCategory", "attestation_legal_category", "opt", `<input id="attestationLegalCategory" value="${escapeHtml(f.attestationLegalCategory)}">`)}
             </div>
             ${field("trustAnchor", "trust_anchor", "opt", `<input id="trustAnchor" value="${escapeHtml(f.trustAnchor)}">`)}
-            ${field("locationStatus", "location_status", "opt", `<input id="locationStatus" value="${escapeHtml(f.locationStatus)}">`)}
+            <p class="hint">Validity status is no longer a free-text location_status URL. Each PID gets a Token Status List index; the list is published at <span class="mono">/statuslists/pid</span>.</p>
         `,
         age: `
             <h3>Age attestations</h3>
@@ -375,9 +375,9 @@ function sectionForm() {
         `,
         portrait: `
             <h3>Portrait</h3>
-            <p class="hint">CIR requires a facial image unless the user opts out. JPEG data is stored as an SD-JWT picture data URL and as mdoc portrait.</p>
+            <p class="hint">CIR requires a facial image unless the user opts out. Only JPEG is accepted. The mdoc portrait is raw JPEG bytes (empty bstr on opt-out), not a data URL. SD-JWT <span class="mono">picture</span> remains a JPEG data URL.</p>
             <label class="check"><input id="portraitOptOut" type="checkbox" ${f.portraitOptOut ? "checked" : ""}> User opts out of portrait (PID_03 empty portrait)</label>
-            ${field("portrait", "portrait", "req", `<input id="portrait" type="file" accept="image/jpeg,image/png">`)}
+            ${field("portrait", "portrait", "req", `<input id="portrait" type="file" accept="image/jpeg">`)}
             ${f.portraitDataUrl && !f.portraitOptOut ? `<img class="portrait-preview" src="${f.portraitDataUrl}" alt="Uploaded portrait">` : ""}
         `,
         review: `
@@ -452,8 +452,8 @@ function resultTab() {
         `;
     }
     return `
-        <p class="lede">Document ${escapeHtml(r.documentNumber)} was issued at ${formatInstant(r.issuedAt)}. Technical expiry ${formatInstant(r.technicalExpiresAt)}. Administrative expiry ${escapeHtml(r.administrativeExpiryDate)}.</p>
-        <p class="hint">${(r.disclosures || []).length} selectively disclosable claims were salted and hashed into the issuer-signed JWT.</p>
+        <p class="lede">Document ${escapeHtml(r.documentNumber)} was issued at ${formatInstant(r.issuedAt)} by ${escapeHtml(r.issuedBy || "officer")}. Technical expiry ${formatInstant(r.technicalExpiresAt)}. Administrative expiry ${escapeHtml(r.administrativeExpiryDate)}.</p>
+        <p class="hint">${(r.disclosures || []).length} selectively disclosable claims were salted and hashed into the issuer-signed JWT. Address and age_equal_or_over members are nested disclosures. Status index ${escapeHtml(r.statusIndex)} at ${escapeHtml(r.statusListUri)}. Type metadata: ${escapeHtml(r.typeMetadataUri)}.</p>
     `;
 }
 
@@ -668,6 +668,11 @@ function bind() {
     document.getElementById("portrait")?.addEventListener("change", (event) => {
         const file = event.target.files[0];
         if (!file) return;
+        if (file.type && file.type !== "image/jpeg") {
+            state.error = "Portrait must be a JPEG.";
+            render();
+            return;
+        }
         const reader = new FileReader();
         reader.onload = () => {
             state.form.portraitDataUrl = reader.result;

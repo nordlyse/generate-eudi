@@ -39,9 +39,11 @@ public class MdocEncoder {
                 putIfPresent(attributes, "resident_house_number", document.residence().houseNumber());
             }
             putIfPresent(attributes, "personal_administrative_number", document.personalAdministrativeNumber());
-            if (!document.portraitOptOut() && document.portraitDataUrl() != null && !document.portraitDataUrl().isBlank()) {
-                attributes.put("portrait", document.portraitDataUrl());
-            }
+            attributes.put("portrait", PortraitProcessor.toRawBase64(document.portraitJpeg()));
+            attributes.put("portrait_encoding", "bstr-base64");
+            attributes.put("portrait_empty", document.portraitOptOut()
+                    || document.portraitJpeg() == null
+                    || document.portraitJpeg().length == 0);
             putIfPresent(attributes, "family_name_birth", document.familyNameBirth());
             putIfPresent(attributes, "given_name_birth", document.givenNameBirth());
             if (document.sex() != null) {

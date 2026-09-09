@@ -65,7 +65,10 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/favicon.svg",
                                 "/api/health",
-                                "/api/meta"
+                                "/api/meta",
+                                "/catalog/**",
+                                "/statuslists/**",
+                                "/.well-known/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/api/**").hasRole("OFFICER")

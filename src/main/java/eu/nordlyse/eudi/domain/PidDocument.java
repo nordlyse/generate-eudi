@@ -1,5 +1,7 @@
 package eu.nordlyse.eudi.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +10,7 @@ import java.util.Map;
  * Canonical Person Identification Data using CIR 2024/2977 identifiers,
  * plus optional ARF PID Rulebook attributes.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record PidDocument(
         String familyName,
         String givenName,
@@ -16,7 +19,7 @@ public record PidDocument(
         List<String> nationalities,
         ResidentAddress residence,
         String personalAdministrativeNumber,
-        String portraitDataUrl,
+        byte[] portraitJpeg,
         boolean portraitOptOut,
         String familyNameBirth,
         String givenNameBirth,
@@ -28,7 +31,6 @@ public record PidDocument(
         String issuingCountry,
         String documentNumber,
         String issuingJurisdiction,
-        String locationStatus,
         LocalDate issuanceDate,
         Map<Integer, Boolean> ageEqualOrOver,
         Integer ageInYears,

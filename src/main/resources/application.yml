@@ -17,6 +17,9 @@ eudi:
   trust-anchor: https://pid.generate-eudi.example/trust-anchors
   technical-validity-days: 14
   issuer-key-file: data/issuer-ec-p256.jwk.json
+  data-directory: data
+  status-list-uri: https://pid.generate-eudi.example/statuslists/pid
+  type-metadata-uri: https://pid.generate-eudi.example/catalog/vct?id=urn:eudi:pid:1
   officer:
     username: officer
     password: eudi-officer-2026

@@ -1,6 +1,8 @@
 package eu.nordlyse.eudi.web;
 
 import eu.nordlyse.eudi.config.EudiProperties;
+import eu.nordlyse.eudi.domain.AuditEvent;
+import eu.nordlyse.eudi.service.AuditLogService;
 import eu.nordlyse.eudi.service.PidIssuanceService;
 import eu.nordlyse.eudi.service.PidSchemaService;
 import eu.nordlyse.eudi.web.dto.PidIssueRequest;
@@ -8,6 +10,7 @@ import eu.nordlyse.eudi.web.dto.PidIssueResponse;
 import eu.nordlyse.eudi.web.dto.SchemaField;
 import eu.nordlyse.eudi.web.dto.UnlockRequest;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,15 +27,18 @@ public class PidController {
 
     private final PidIssuanceService issuanceService;
     private final PidSchemaService schemaService;
+    private final AuditLogService auditLogService;
     private final EudiProperties properties;
 
     public PidController(
             PidIssuanceService issuanceService,
             PidSchemaService schemaService,
+            AuditLogService auditLogService,
             EudiProperties properties
     ) {
         this.issuanceService = issuanceService;
         this.schemaService = schemaService;
+        this.auditLogService = auditLogService;
         this.properties = properties;
     }
 
@@ -49,6 +55,8 @@ public class PidController {
                 "mdocDocType", properties.mdocDocType(),
                 "mdocNamespace", properties.mdocNamespace(),
                 "issuer", properties.issuer(),
+                "statusListUri", properties.statusListUri(),
+                "typeMetadataUri", properties.typeMetadataUri(),
                 "standards", List.of(
                         "CIR (EU) 2024/2977",
                         "ARF Annex 3.01 PID Rulebook",
@@ -69,9 +77,14 @@ public class PidController {
         return issuanceService.stats();
     }
 
+    @GetMapping("/pid/audit")
+    public List<AuditEvent> audit() {
+        return auditLogService.list();
+    }
+
     @PostMapping("/pid")
-    public PidIssueResponse issue(@Valid @RequestBody PidIssueRequest request) {
-        return issuanceService.issue(request);
+    public PidIssueResponse issue(@Valid @RequestBody PidIssueRequest request, Authentication authentication) {
+        return issuanceService.issue(request, authentication.getName());
     }
 
     @GetMapping("/pid")
@@ -87,5 +100,10 @@ public class PidController {
     @PostMapping("/pid/{id}/unlock")
     public Map<String, Object> unlock(@PathVariable String id, @RequestBody UnlockRequest request) {
         return issuanceService.unlock(id, request.recoverySecret());
+    }
+
+    @PostMapping("/pid/{id}/revoke")
+    public PidIssueResponse revoke(@PathVariable String id, Authentication authentication) {
+        return issuanceService.revoke(id, authentication.getName());
     }
 }

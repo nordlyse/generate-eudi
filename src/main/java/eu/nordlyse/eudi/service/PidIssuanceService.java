@@ -5,6 +5,7 @@ import eu.nordlyse.eudi.crypto.AgeClaimsFactory;
 import eu.nordlyse.eudi.crypto.HolderKeyService;
 import eu.nordlyse.eudi.crypto.IssuerKeyStore;
 import eu.nordlyse.eudi.crypto.MdocEncoder;
+import eu.nordlyse.eudi.crypto.PortraitProcessor;
 import eu.nordlyse.eudi.crypto.SdJwtVcIssuer;
 import eu.nordlyse.eudi.domain.IssuedCredential;
 import eu.nordlyse.eudi.domain.PidDocument;
@@ -41,6 +42,7 @@ public class PidIssuanceService {
     private final MdocEncoder mdocEncoder;
     private final IssuerKeyStore issuerKeyStore;
     private final CredentialRegistry registry;
+    private final AuditLogService auditLog;
     private final Clock clock;
 
     public PidIssuanceService(
@@ -49,7 +51,8 @@ public class PidIssuanceService {
             SdJwtVcIssuer sdJwtVcIssuer,
             MdocEncoder mdocEncoder,
             IssuerKeyStore issuerKeyStore,
-            CredentialRegistry registry
+            CredentialRegistry registry,
+            AuditLogService auditLog
     ) {
         this.properties = properties;
         this.holderKeyService = holderKeyService;
@@ -57,16 +60,24 @@ public class PidIssuanceService {
         this.mdocEncoder = mdocEncoder;
         this.issuerKeyStore = issuerKeyStore;
         this.registry = registry;
+        this.auditLog = auditLog;
         this.clock = Clock.systemUTC();
     }
 
-    public PidIssueResponse issue(PidIssueRequest request) {
+    public PidIssueResponse issue(PidIssueRequest request, String officer) {
         PidDocument document = toDocument(request);
         Instant issuedAt = clock.instant();
         Instant technicalExpiry = issuedAt.plusSeconds(properties.technicalValidityDays() * 24L * 3600L);
+        int statusIndex = registry.nextStatusIndex();
 
         HolderKeyService.HolderKeyBundle holderKey = holderKeyService.generateBoundHolderKey();
-        SdJwtVcIssuer.IssuedSdJwt sdJwt = sdJwtVcIssuer.issue(document, holderKey.publicJwk(), issuedAt, technicalExpiry);
+        SdJwtVcIssuer.IssuedSdJwt sdJwt = sdJwtVcIssuer.issue(
+                document,
+                holderKey.publicJwk(),
+                issuedAt,
+                technicalExpiry,
+                statusIndex
+        );
         MdocEncoder.EncodedMdoc mdoc = mdocEncoder.encode(document);
 
         IssuedCredential stored = new IssuedCredential(
@@ -80,9 +91,19 @@ public class PidIssuanceService {
                 mdoc.cborHex(),
                 holderKey.publicJwk(),
                 holderKey.encryptedPrivateJwk(),
-                issuerKeyStore.publicJwk().toJSONObject()
+                issuerKeyStore.publicJwk().toJSONObject(),
+                statusIndex,
+                false,
+                officer
         );
         registry.save(stored);
+        auditLog.record(
+                officer,
+                "ISSUE",
+                stored.id(),
+                document.documentNumber(),
+                "Issued PID with status index " + statusIndex
+        );
         return toResponse(stored, sdJwt.disclosures(), holderKey.recoverySecret(), true);
     }
 
@@ -108,12 +129,29 @@ public class PidIssuanceService {
         }
     }
 
+    public PidIssueResponse revoke(String id, String officer) {
+        IssuedCredential credential = registry.find(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PID not found"));
+        IssuedCredential revoked = credential.revoke();
+        registry.save(revoked);
+        auditLog.record(
+                officer,
+                "REVOKE",
+                revoked.id(),
+                revoked.document().documentNumber(),
+                "Revoked PID at status index " + revoked.statusIndex()
+        );
+        return toResponse(revoked, List.of(), null, true);
+    }
+
     public Map<String, Object> stats() {
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("issuedCount", registry.size());
         stats.put("vct", properties.vct());
         stats.put("mdocDocType", properties.mdocDocType());
         stats.put("issuer", properties.issuer());
+        stats.put("statusListUri", properties.statusListUri());
+        stats.put("typeMetadataUri", properties.typeMetadataUri());
         return stats;
     }
 
@@ -141,10 +179,7 @@ public class PidIssuanceService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sex must be one of 0,1,2,3,4,5,6,9");
         }
 
-        if (!request.isPortraitOptOut() && (request.getPortraitDataUrl() == null || request.getPortraitDataUrl().isBlank())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "portrait is required unless the user opts out");
-        }
+        byte[] portrait = PortraitProcessor.parse(request.getPortraitDataUrl(), request.isPortraitOptOut());
 
         LocalDate today = LocalDate.ofInstant(clock.instant(), ZoneOffset.UTC);
         LocalDate issuanceDate = request.getIssuanceDate() == null ? today : request.getIssuanceDate();
@@ -192,7 +227,7 @@ public class PidIssuanceService {
                 List.copyOf(nationalities),
                 residence,
                 trim(request.getPersonalAdministrativeNumber()),
-                request.isPortraitOptOut() ? null : request.getPortraitDataUrl(),
+                portrait,
                 request.isPortraitOptOut(),
                 trim(request.getFamilyNameBirth()),
                 trim(request.getGivenNameBirth()),
@@ -204,7 +239,6 @@ public class PidIssuanceService {
                 issuingCountry,
                 documentNumber,
                 jurisdiction,
-                trim(request.getLocationStatus()),
                 issuanceDate,
                 ages,
                 ageInYears,
@@ -221,7 +255,7 @@ public class PidIssuanceService {
             boolean includeArtifacts
     ) {
         List<PidIssueResponse.DisclosureView> disclosureViews = disclosures.stream()
-                .map(item -> new PidIssueResponse.DisclosureView(item.claim(), item.encoded()))
+                .map(item -> new PidIssueResponse.DisclosureView(item.path(), item.claim(), item.encoded()))
                 .toList();
         String warning = recoverySecret == null ? null
                 : "Store this recovery secret with the holder. It is shown only at issuance and is required to unwrap the encrypted holder private key. The PID private key must not be used to sign transactional data.";
@@ -244,7 +278,12 @@ public class PidIssuanceService {
                 warning,
                 includeArtifacts ? credential.issuerPublicJwk() : null,
                 credential.document().givenName(),
-                credential.document().familyName()
+                credential.document().familyName(),
+                credential.statusIndex(),
+                properties.statusListUri(),
+                properties.typeMetadataUri(),
+                credential.revoked(),
+                credential.issuedBy()
         );
     }
 

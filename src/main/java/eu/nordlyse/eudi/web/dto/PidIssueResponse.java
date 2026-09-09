@@ -27,8 +27,13 @@ public record PidIssueResponse(
         String holderKeyWarning,
         Map<String, Object> issuerPublicJwk,
         String givenName,
-        String familyName
+        String familyName,
+        Integer statusIndex,
+        String statusListUri,
+        String typeMetadataUri,
+        Boolean revoked,
+        String issuedBy
 ) {
-    public record DisclosureView(String claim, String disclosure) {
+    public record DisclosureView(String path, String claim, String disclosure) {
     }
 }

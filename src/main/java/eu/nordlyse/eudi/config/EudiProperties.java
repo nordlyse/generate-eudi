@@ -11,6 +11,9 @@ public record EudiProperties(
         String trustAnchor,
         int technicalValidityDays,
         String issuerKeyFile,
+        String dataDirectory,
+        String statusListUri,
+        String typeMetadataUri,
         Officer officer
 ) {
     public record Officer(String username, String password) {

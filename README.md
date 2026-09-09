@@ -61,9 +61,11 @@ Mandatory CIR attributes: `family_name`, `given_name`, `birth_date`, `birth_plac
 | POST | `/api/pid` | Issue PID + encrypted holder key |
 | GET | `/api/pid` | Session registry |
 | GET | `/api/pid/{id}` | Issued artefacts (recovery secret is not stored) |
+| GET | `/api/pid/audit` | Officer audit log |
 | POST | `/api/pid/{id}/unlock` | Unwrap holder JWK with the recovery secret |
+| POST | `/api/pid/{id}/revoke` | Set Token Status List bit to revoked |
 
-Public: `GET /api/health`, `GET /api/meta`.
+Public: `GET /api/health`, `GET /api/meta`, `GET /catalog/vct?id=urn:eudi:pid:1`, `GET /.well-known/jwt-vc-issuer`, `GET /statuslists/pid`.
 
 ## Licenses
 
@@ -97,17 +99,17 @@ Officer desk for a natural-person PID:
 - SD-JWT VC (`vct`: `urn:eudi:pid:1`) with salted disclosures, `cnf.jwk`, short technical validity
 - mdoc-aligned attribute map (`eu.europa.ec.eudi.pid.1`) plus CBOR hex — **attributes only**, not a full mdoc
 - Server-generated P-256 holder key, public JWK in `cnf`, private JWK wrapped as JWE
-- In-memory session registry; demo officer login
+- In-memory session registry; demo officer login (superseded by Stage 1 persistence)
 
-### Stage 1 — make the issued artefact more standard-faithful
+### Stage 1 — done (`stage-1` branch)
 
-Stay on the officer desk. Improve the document that is already produced.
+Officer desk improvements to the issued artefact:
 
-1. Nested selective disclosure: disclose `address.*` and `age_equal_or_over.NN` one claim at a time, not as whole objects.
-2. Portrait: accept JPEG only; store mdoc `portrait` as raw image bytes (PID_03 / ISO 39794-5 or 19794-5), not a data URL; encode opt-out as the specified empty portrait.
-3. SD-JWT VC `status` (token status list or equivalent) instead of a plain `location_status` URL string.
-4. Publish `vct` type metadata (`urn:eudi:pid:1` schema / display) as required by PID_15.
-5. Persist issued PIDs and an officer audit log (who issued which `document_number`, when). Restart must not wipe the registry.
+1. Nested selective disclosure for `address.*`, `place_of_birth.*`, and `age_equal_or_over.NN`.
+2. JPEG-only portrait; mdoc `portrait` is raw JPEG bytes as `bstr-base64` (empty on PID_03 opt-out); SD-JWT `picture` stays a JPEG data URL.
+3. SD-JWT `status.status_list` (IETF Token Status List) published at `/statuslists/pid`; officer revoke updates the list.
+4. `vct` type metadata at `/catalog/vct?id=urn:eudi:pid:1` and issuer JWKS at `/.well-known/jwt-vc-issuer` (PID_15).
+5. Issued PIDs persist under `data/issued-pids.json`; officer audit log under `data/audit-log.json`.
 
 ### Stage 2 — complete the ISO/IEC 18013-5 mdoc
 
@@ -176,7 +178,7 @@ Not part of the natural-person PID form.
 
 | Next session | Stage | Outcome |
 | --- | --- | --- |
-| 1 | Stage 1 | Better SD-JWT, portrait, status, persistence |
+| 1 | Stage 1 (done) | Nested SD, JPEG portrait, status list, VCT catalog, persistence |
 | 2 | Stage 2 | Verifiable mdoc file, not only a CBOR attribute map |
 | 3 | Stage 3 + 4 | Key in a demo wallet; credential delivered by OpenID4VCI |
 | 4 | Stage 5 + 6 | Proofing/trust stub + a verifier that accepts a presentation |
