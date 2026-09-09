@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: generate-eudi
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
+
+eudi:
+  issuer: https://pid.generate-eudi.example
+  vct: urn:eudi:pid:1
+  mdoc-doc-type: eu.europa.ec.eudi.pid.1
+  mdoc-namespace: eu.europa.ec.eudi.pid.1
+  trust-anchor: https://pid.generate-eudi.example/trust-anchors
+  technical-validity-days: 14
+  issuer-key-file: data/issuer-ec-p256.jwk.json
+  officer:
+    username: officer
+    password: eudi-officer-2026
