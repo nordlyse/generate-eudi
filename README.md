@@ -90,28 +90,28 @@ Legal-person PID (company / public body identity) is **not** a missing field on 
 
 The PID holder key must never be used to sign transactional data (PID Rulebook §5). That stays true in every stage.
 
-### Stage 0 — done (this repository)
+### Stage 0 — done ![done](https://img.shields.io/badge/done-brightgreen)
 
 Officer desk for a natural-person PID:
 
-- CIR 2024/2977 + ARF PID Rulebook attributes and metadata in the UI and API
-- Age claims derived from `birth_date` (`age_in_years`, `age_birth_year`, `age_equal_or_over.{12,14,16,18,21,65}`)
-- SD-JWT VC (`vct`: `urn:eudi:pid:1`) with salted disclosures, `cnf.jwk`, short technical validity
-- mdoc-aligned attribute map (`eu.europa.ec.eudi.pid.1`) plus CBOR hex — **attributes only**, not a full mdoc
-- Server-generated P-256 holder key, public JWK in `cnf`, private JWK wrapped as JWE
-- In-memory session registry; demo officer login (superseded by Stage 1 persistence)
+- [x] CIR 2024/2977 + ARF PID Rulebook attributes and metadata in the UI and API
+- [x] Age claims derived from `birth_date` (`age_in_years`, `age_birth_year`, `age_equal_or_over.{12,14,16,18,21,65}`)
+- [x] SD-JWT VC (`vct`: `urn:eudi:pid:1`) with salted disclosures, `cnf.jwk`, short technical validity
+- [x] mdoc-aligned attribute map (`eu.europa.ec.eudi.pid.1`) plus CBOR hex — **attributes only**, not a full mdoc
+- [x] Server-generated P-256 holder key, public JWK in `cnf`, private JWK wrapped as JWE
+- [x] Officer login (persistence added in Stage 1)
 
-### Stage 1 — done (`stage-1` branch)
+### Stage 1 — done (`stage-1` branch) ![done](https://img.shields.io/badge/done-brightgreen)
 
 Officer desk improvements to the issued artefact:
 
-1. Nested selective disclosure for `address.*`, `place_of_birth.*`, and `age_equal_or_over.NN`.
-2. JPEG-only portrait; mdoc `portrait` is raw JPEG bytes as `bstr-base64` (empty on PID_03 opt-out); SD-JWT `picture` stays a JPEG data URL.
-3. SD-JWT `status.status_list` (IETF Token Status List) published at `/statuslists/pid`; officer revoke updates the list.
-4. `vct` type metadata at `/catalog/vct?id=urn:eudi:pid:1` and issuer JWKS at `/.well-known/jwt-vc-issuer` (PID_15).
-5. Issued PIDs persist under `data/issued-pids.json`; officer audit log under `data/audit-log.json`.
+- [x] Nested selective disclosure for `address.*`, `place_of_birth.*`, and `age_equal_or_over.NN`
+- [x] JPEG-only portrait; mdoc `portrait` is raw JPEG bytes as `bstr-base64` (empty on PID_03 opt-out); SD-JWT `picture` stays a JPEG data URL
+- [x] SD-JWT `status.status_list` (IETF Token Status List) published at `/statuslists/pid`; officer revoke updates the list
+- [x] `vct` type metadata at `/catalog/vct?id=urn:eudi:pid:1` and issuer JWKS at `/.well-known/jwt-vc-issuer` (PID_15)
+- [x] Issued PIDs persist under `data/issued-pids.json`; officer audit log under `data/audit-log.json`
 
-### Stage 2 — complete the ISO/IEC 18013-5 mdoc
+### Stage 2 — complete the ISO/IEC 18013-5 mdoc ![todo](https://img.shields.io/badge/todo-lightgrey)
 
 CIR requires PID in **both** SD-JWT VC and mdoc. Stage 0 only maps attributes.
 
@@ -120,7 +120,7 @@ CIR requires PID in **both** SD-JWT VC and mdoc. Stage 0 only maps attributes.
 3. Encode dates as `full-date` / `tdate` per the PID Rulebook CDDL, not only ISO date strings in JSON.
 4. Optional later: proximity session encryption (NFC / BLE DeviceEngagement). Needed for a phone presentation demo, not for “file on disk” issuance.
 
-### Stage 3 — holder key is born in a wallet, not on the server
+### Stage 3 — holder key is born in a wallet, not on the server ![todo](https://img.shields.io/badge/todo-lightgrey)
 
 Today the server generates the holder key and shows a recovery secret. In EUDI the key is generated in the Wallet Secure Cryptographic Device (WSCD).
 
@@ -129,7 +129,7 @@ Today the server generates the holder key and shows a recovery secret. In EUDI t
 3. Issuer binds that public key in `cnf` / MSO deviceKey and does not wrap a server-side private key.
 4. Keep the rule: this key is only for PID key binding, not for signing contracts or payments.
 
-### Stage 4 — issue into the wallet (OpenID4VCI)
+### Stage 4 — issue into the wallet (OpenID4VCI) ![todo](https://img.shields.io/badge/todo-lightgrey)
 
 A PID is issued when it arrives in a Wallet Unit, not when an officer downloads a file.
 
@@ -137,7 +137,7 @@ A PID is issued when it arrives in a Wallet Unit, not when an officer downloads 
 2. Wallet pulls the SD-JWT (and later the mdoc) over that protocol.
 3. During the administrative validity period, re-issue short-lived **technical** PIDs without asking the user again (ARF distinction vs `expiry_date` / `issuance_date`).
 
-### Stage 5 — identity proofing and issuer trust
+### Stage 5 — identity proofing and issuer trust ![todo](https://img.shields.io/badge/todo-lightgrey)
 
 Without this, the credential is still a demo even if Stages 1–4 are complete.
 
@@ -146,7 +146,7 @@ Without this, the credential is still a demo even if Stages 1–4 are complete.
 3. Align `iss` / trust anchor with how CIR 2024/2980 trusted lists work (even if the key is not on the real EU list).
 4. Revocation workflow: officer revoke → status list / MSO updates → relying party can check.
 
-### Stage 6 — presentation and relying party (optional, but needed to prove issuance)
+### Stage 6 — presentation and relying party (optional, but needed to prove issuance) ![todo](https://img.shields.io/badge/todo-lightgrey)
 
 Issuance is only proven when someone can verify a presentation.
 
@@ -154,7 +154,7 @@ Issuance is only proven when someone can verify a presentation.
 2. Selective disclosure UI in the wallet: e.g. share `age_equal_or_over.18` without `birthdate`.
 3. Do not use the PID private key to sign transactional payloads from the relying party.
 
-### Stage 7 — production EUDI Wallet Unit (out of this sample’s original scope)
+### Stage 7 — production EUDI Wallet Unit (out of this sample’s original scope) ![later](https://img.shields.io/badge/later-lightgrey)
 
 Only after Stages 3–6. This is a certified product, not a README checkbox:
 
@@ -166,7 +166,7 @@ Only after Stages 3–6. This is a certified product, not a README checkbox:
 
 This repository will not become a notified Wallet or PID Provider by completing Stages 1–6 alone.
 
-### Separate track — legal-person identification data
+### Separate track — legal-person identification data ![later](https://img.shields.io/badge/later-lightgrey)
 
 Not part of the natural-person PID form.
 
@@ -176,10 +176,11 @@ Not part of the natural-person PID form.
 
 ### Suggested order of work
 
-| Next session | Stage | Outcome |
+| Status | Stage | Outcome |
 | --- | --- | --- |
-| 1 | Stage 1 (done) | Nested SD, JPEG portrait, status list, VCT catalog, persistence |
-| 2 | Stage 2 | Verifiable mdoc file, not only a CBOR attribute map |
-| 3 | Stage 3 + 4 | Key in a demo wallet; credential delivered by OpenID4VCI |
-| 4 | Stage 5 + 6 | Proofing/trust stub + a verifier that accepts a presentation |
-| later | Stage 7 / legal person | Only if the goal is a Wallet product or organisation identity |
+| ![done](https://img.shields.io/badge/done-brightgreen) | Stage 0 | Officer desk, CIR/ARF fields, teaching SD-JWT |
+| ![done](https://img.shields.io/badge/done-brightgreen) | Stage 1 | Nested SD, JPEG portrait, status list, VCT catalog, persistence |
+| ![todo](https://img.shields.io/badge/todo-lightgrey) | Stage 2 | Verifiable mdoc file, not only a CBOR attribute map |
+| ![todo](https://img.shields.io/badge/todo-lightgrey) | Stage 3 + 4 | Key in a demo wallet; credential delivered by OpenID4VCI |
+| ![todo](https://img.shields.io/badge/todo-lightgrey) | Stage 5 + 6 | Proofing/trust stub + a verifier that accepts a presentation |
+| ![later](https://img.shields.io/badge/later-lightgrey) | Stage 7 / legal person | Only if the goal is a Wallet product or organisation identity |
