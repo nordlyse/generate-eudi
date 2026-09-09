@@ -30,6 +30,12 @@ mvn spring-boot:run
 
 Open [http://localhost:8080](http://localhost:8080).
 
+Test coverage (JaCoCo HTML report at `target/site/jacoco/index.html`):
+
+```bash
+mvn test
+```
+
 Demo officer credentials (change before any non-local use):
 
 - Username: `officer`
@@ -76,7 +82,7 @@ This project is licensed under the **Apache License 2.0**. Third-party libraries
 - Nimbus JOSE JWT — Apache 2.0
 - Jackson (JSON + CBOR) — Apache 2.0
 
-Tests use the Spring Boot test stack (JUnit is EPL 2.0). Runtime issuance does not depend on it.
+Tests use the Spring Boot test stack (JUnit is EPL 2.0). Coverage uses JaCoCo (EPL 2.0). Runtime issuance does not depend on either.
 
 ## Configuration
 
