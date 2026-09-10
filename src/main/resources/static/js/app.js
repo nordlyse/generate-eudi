@@ -106,10 +106,15 @@ document.addEventListener("mousemove", (event) => {
 });
 
 async function api(path, options = {}) {
+    const { headers: extraHeaders, ...rest } = options;
+    const headers = { ...(extraHeaders || {}) };
+    if (rest.body) {
+        headers["Content-Type"] = "application/json";
+    }
     const response = await fetch(path, {
         credentials: "include",
-        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-        ...options
+        headers,
+        ...rest
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -119,13 +124,15 @@ async function api(path, options = {}) {
 }
 
 async function boot() {
+    render();
     try {
         state.user = await api("/api/auth/me");
         await loadWorkspace();
+        render();
     } catch {
         state.user = null;
+        render();
     }
-    render();
 }
 
 async function loadWorkspace() {

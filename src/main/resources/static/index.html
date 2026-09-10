@@ -6,6 +6,7 @@
     <title>generate-eudi — European Digital Identity PID Issuer</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/app.css">
+    <style>html,body{margin:0;min-height:100%;background:#05010d;color:#f5f3ff}</style>
 </head>
 <body>
 <div id="aurora" aria-hidden="true">
@@ -16,7 +17,21 @@
     <span class="noise"></span>
 </div>
 <div id="spotlight" aria-hidden="true"></div>
-<div id="app"></div>
+<div id="app">
+    <div class="wrap">
+        <section class="hero">
+            <div class="kicker">EUDI Wallet · PID Rulebook · CIR 2024/2977</div>
+            <h2>Issue a <span class="gradient-text">European Digital Identity</span></h2>
+        </section>
+        <form class="glass login-card" id="login-form" action="/api/auth/login" method="post">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" value="officer">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" value="eudi-officer-2026">
+            <button class="btn full" type="submit">Enter the PID desk</button>
+        </form>
+    </div>
+</div>
 <script src="/js/app.js"></script>
 </body>
 </html>

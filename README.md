@@ -28,7 +28,7 @@ Requires **Java 21** and **Maven 3.9+**.
 mvn spring-boot:run
 ```
 
-Open [http://localhost:8080](http://localhost:8080).
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080) (prefer `127.0.0.1` over `localhost` — some IDEs intercept `localhost:8080`).
 
 Test coverage (JaCoCo HTML report at `target/site/jacoco/index.html`):
 
