@@ -41,16 +41,76 @@ Demo officer credentials (change before any non-local use):
 - Username: `officer`
 - Password: `eudi-officer-2026`
 
-## What happens at issuance
+A longer Turkish walkthrough of the same design (diagrams, term glossary) lives in [`aciklama.md`](aciklama.md).
 
-1. The officer authenticates.
-2. CIR/ARF fields are validated (ISO country codes, sex vocabulary, portrait opt-out, jurisdiction prefix, and at least one `place_of_birth` member).
-3. Age claims `age_in_years`, `age_birth_year`, and `age_equal_or_over.{12,14,16,18,21,65}` are derived from `birth_date`.
-4. An EC P-256 holder key is generated. Only the public JWK is placed in `cnf`.
-5. The private JWK is encrypted with a random 256-bit AES key. That wrapping key is shown **once** as the recovery secret.
-6. The PID Provider signs the SD-JWT with ES256. The signing JWK is stored at `data/issuer-ec-p256.jwk.json`.
+## How it works
 
-The PID private key must not be used to sign transactional data (PID Rulebook §5).
+This is a **single Spring Boot 3 process** (Java 21) that serves a static officer UI and a JSON API. There is no separate frontend stack, no wallet app, and no verifier. A session-authenticated officer submits CIR/ARF fields; the server validates them, derives age attestations, and emits **two encodings of the same PID** plus a holder key.
+
+```mermaid
+flowchart LR
+    UI[Officer UI] -->|HTTP session| API[Spring Boot]
+    API --> SD[SD-JWT VC ES256]
+    API --> MD[mdoc attribute map + CBOR]
+    API --> HK[Holder P-256 wrapped as JWE]
+    API --> Disk[(data/)]
+```
+
+### Runtime stack
+
+| Layer | Choice |
+| --- | --- |
+| Language / runtime | Java 21 |
+| App framework | Spring Boot 3.5, Spring Security (in-memory officer, HTTP session), Spring Validation |
+| Logging | Log4j2 (Logback is excluded) |
+| JOSE / JWT | Nimbus JOSE JWT — SD-JWT signing, JWE wrap/unwrap, JWKS |
+| Binary encoding | Jackson CBOR (`jackson-dataformat-cbor`) |
+| UI | Static HTML / CSS / JS under `src/main/resources/static/` |
+| Persistence | JSON files under `data/` (not a SQL database) |
+
+No machine-learning models are used. “Model” here means **cryptographic algorithms and credential formats**.
+
+### Cryptographic algorithms and credential formats
+
+| What | Algorithm / format | Where it is used |
+| --- | --- | --- |
+| Issuer signature | **ES256** (ECDSA with SHA-256 on curve **P-256** / secp256r1) | SD-JWT `alg`, JWT `typ: vc+sd-jwt` |
+| Holder binding key | **EC P-256** key pair | Public JWK in SD-JWT `cnf.jwk`; private JWK never placed in the JWT |
+| Holder private-key wrap | **JWE** `alg: dir`, `enc: A256GCM` | AES-256-GCM over the holder JWK; wrapping key shown once as the recovery secret |
+| Selective disclosure | **SD-JWT VC** (`vct`: `urn:eudi:pid:1`), disclosures hashed with **SHA-256** (`_sd_alg`) | Salted `~` disclosures for claims; nested `_sd` for `address.*`, `place_of_birth.*`, `age_equal_or_over.*` |
+| mdoc encoding | ISO/IEC 18013-5 **namespace / docType** `eu.europa.ec.eudi.pid.1`, attributes as **CBOR** | Teaching-grade attribute map only — no MSO / COSE_Sign1 yet |
+| Portrait | JPEG bytes | mdoc `portrait` as `bstr-base64` (empty on opt-out); SD-JWT `picture` as a JPEG data URL |
+| Revocation | IETF **Token Status List** (1 bit per PID, zlib + base64url) | `status.status_list` in the SD-JWT; public list at `/statuslists/pid` |
+| Password hashing | **BCrypt** | Officer password in Spring Security |
+| Key identifiers | JWK `kid` | Issuer key file + JWKS at `/.well-known/jwt-vc-issuer` |
+
+Two validity windows exist on purpose: administrative `issuance_date` / `expiry_date` (default ten years) and a short technical JWT `exp` (default 14 days, `eudi.technical-validity-days`).
+
+The holder PID private key must not be used to sign transactional data (PID Rulebook §5). It only binds the credential to a key (`cnf`).
+
+### Issuance pipeline
+
+`POST /api/pid` runs `PidIssuanceService.issue`:
+
+1. Authenticate the officer (session).
+2. Validate CIR/ARF fields (ISO country codes, sex vocabulary 0/1/2/3/4/5/6/9, JPEG portrait or PID_03 opt-out, jurisdiction prefix, at least one `place_of_birth` member).
+3. Build a `PidDocument`. Derive `age_in_years`, `age_birth_year`, and `age_equal_or_over.{12,14,16,18,21,65}` from `birth_date`.
+4. Generate an EC P-256 holder key. Put only the public JWK in `cnf`. Wrap the private JWK as JWE; return the wrapping key **once**.
+5. Hash salted disclosures, sign the SD-JWT with the issuer P-256 key (**ES256**). The issuer JWK is created on first run at `data/issuer-ec-p256.jwk.json`.
+6. Encode the same document as an mdoc-aligned map and CBOR hex.
+7. Allocate a Token Status List index, persist the artefacts, append an `ISSUE` audit row.
+
+Unlock (`POST /api/pid/{id}/unlock`) decrypts the JWE with the recovery secret. Revoke flips the status-list bit for that index.
+
+### What is stored
+
+| Path | Content |
+| --- | --- |
+| `data/issuer-ec-p256.jwk.json` | Issuer ES256 key (includes private `d`) |
+| `data/issued-pids.json` | Issued SD-JWT, mdoc, JWE — **not** the recovery secret |
+| `data/audit-log.json` | Officer `ISSUE` / `REVOKE` events |
+
+Public metadata: VCT type catalogue at `/catalog/vct?id=urn:eudi:pid:1`, issuer JWKS at `/.well-known/jwt-vc-issuer`.
 
 ## PID fields
 
