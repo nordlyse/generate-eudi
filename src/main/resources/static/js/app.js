@@ -225,12 +225,10 @@ function topbar(signedIn) {
                     <p>European Digital Identity PID issuer</p>
                 </div>
             </div>
-            <div class="chip-row">
-                <span class="chip">vct urn:eudi:pid:1</span>
-                <span class="chip">eu.europa.ec.eudi.pid.1</span>
-                ${signedIn ? `<span class="chip glow">${escapeHtml(state.user.username)}</span>
-                <button class="btn ghost" id="logout" type="button">Sign out</button>` : ""}
-            </div>
+            ${signedIn ? `<div class="chip-row">
+                <span class="chip glow">${escapeHtml(state.user.username)}</span>
+                <button class="btn ghost" id="logout" type="button">Sign out</button>
+            </div>` : ""}
         </header>
     `;
 }
@@ -273,7 +271,7 @@ function issueView() {
             <aside class="preview glass id-card">
                 <div class="eu">European Union · PID</div>
                 ${stars()}
-                <div style="display:flex;gap:12px;align-items:flex-start;margin-top:8px">
+                <div class="card-body">
                     ${state.form.portraitDataUrl && !state.form.portraitOptOut
                         ? `<img class="portrait-preview" src="${state.form.portraitDataUrl}" alt="Portrait preview">`
                         : `<div class="portrait-preview"></div>`}
@@ -286,7 +284,7 @@ function issueView() {
                         </div>
                     </div>
                 </div>
-                <p class="meta" style="margin-top:18px">Technical PIDs are short-lived. Administrative validity is separate (issuance / expiry dates).</p>
+                <p class="meta card-note">Technical PIDs are short-lived. Administrative validity is separate (issuance / expiry dates).</p>
             </aside>
         </div>
     `;

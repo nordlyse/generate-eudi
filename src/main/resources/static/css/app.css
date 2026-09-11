@@ -65,7 +65,7 @@ body {
 
 #app { position: relative; z-index: 2; min-height: 100vh; }
 
-.wrap { width: min(1280px, calc(100% - 40px)); margin: 0 auto; }
+.wrap { width: min(1360px, calc(100% - 40px)); margin: 0 auto; }
 .topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 22px 0 8px;
@@ -151,8 +151,14 @@ select option { background: #120a24; }
 .row > * { flex: 1; }
 .error { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 8px; }
 
-.shell { display: grid; grid-template-columns: 240px 1fr 340px; gap: 18px; padding-bottom: 60px; }
-.side, .preview { position: sticky; top: 18px; height: fit-content; }
+.shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr) 420px;
+    gap: 18px;
+    padding-bottom: 60px;
+    align-items: stretch;
+}
+.side, .preview { min-height: 100%; }
 .nav-btn {
     width: 100%; text-align: left; background: transparent; border: 0; color: var(--muted);
     padding: 10px 12px; border-radius: 12px; cursor: pointer; font: inherit; display: flex; gap: 10px; align-items: center;
@@ -175,18 +181,31 @@ select option { background: #120a24; }
 .field-head { display: flex; justify-content: space-between; align-items: center; }
 
 .id-card {
-    padding: 18px; min-height: 210px; position: relative; overflow: hidden;
+    padding: 22px;
+    min-height: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     background:
         linear-gradient(135deg, rgba(124,92,255,.18), rgba(14,165,233,.08) 40%, rgba(5,1,13,.9)),
         radial-gradient(circle at 90% 10%, rgba(94,234,212,.25), transparent 40%);
 }
 .id-card .stars { position: absolute; right: 16px; top: 16px; opacity: .9; }
 .id-card .eu { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--cyan); }
-.id-card h4 { margin: 18px 0 4px; font-size: 24px; }
+.id-card .card-body {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-top: 14px;
+    flex: 1;
+}
+.id-card h4 { margin: 0 0 8px; font-size: 24px; }
 .id-card .meta { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.id-card .card-note { margin-top: auto; padding-top: 18px; }
 .portrait-preview {
-    width: 72px; height: 90px; border-radius: 10px; object-fit: cover; border: 1px solid var(--line);
-    background: rgba(0,0,0,.3);
+    width: 96px; height: 120px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line);
+    background: rgba(0,0,0,.3); flex-shrink: 0;
 }
 
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
