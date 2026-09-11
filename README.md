@@ -41,8 +41,6 @@ Demo officer credentials (change before any non-local use):
 - Username: `officer`
 - Password: `eudi-officer-2026`
 
-A longer Turkish walkthrough of the same design (diagrams, term glossary) lives in [`aciklama.md`](aciklama.md).
-
 ## How it works
 
 This is a **single Spring Boot 3 process** (Java 21) that serves a static officer UI and a JSON API. There is no separate frontend stack, no wallet app, and no verifier. A session-authenticated officer submits CIR/ARF fields; the server validates them, derives age attestations, and emits **two encodings of the same PID** plus a holder key.
