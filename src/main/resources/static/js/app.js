@@ -197,7 +197,6 @@ function loginView() {
             <form class="glass login-card" id="login-form">
                 <div class="chip-row">
                     <span class="chip glow">Officer access</span>
-                    <span class="chip">Demo issuer</span>
                 </div>
                 <label for="username">Username</label>
                 <input id="username" name="username" autocomplete="username" value="officer">
