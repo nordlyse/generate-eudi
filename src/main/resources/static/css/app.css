@@ -102,7 +102,8 @@ body {
     animation: sheen 8s linear infinite;
 }
 @keyframes sheen { to { background-position: 200% 0; } }
-.lede { max-width: 640px; color: var(--muted); font-size: 17px; line-height: 1.6; }
+.lede { max-width: 720px; color: var(--muted); font-size: 17px; line-height: 1.65; }
+.hero .lede { max-width: none; }
 
 .glass {
     background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
@@ -111,7 +112,7 @@ body {
     box-shadow: var(--shadow);
     backdrop-filter: blur(18px);
 }
-.login-card { width: min(440px, 100%); margin: 28px 0 80px; padding: 28px; position: relative; overflow: hidden; }
+.login-card { width: min(440px, 100%); margin: 28px auto 80px; padding: 28px; position: relative; overflow: hidden; }
 .login-card::before {
     content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
     background: linear-gradient(120deg, transparent, rgba(124,92,255,.7), rgba(94,234,212,.6), transparent);
