@@ -6,7 +6,7 @@ Reference **Person Identification Data (PID)** issuer for the [European Digital 
 - an **ISO/IEC 18013-5 aligned** attribute map (`docType` / namespace `eu.europa.ec.eudi.pid.1`) plus CBOR
 - a **holder-specific P-256 key** bound in `cnf.jwk`, with the private JWK wrapped as **JWE** (`dir` + `A256GCM`)
 
-This is a demonstration desk, not a notified PID Provider and not a production EUDI Wallet.
+This is a demonstration desk, not a notified PID Provider and not a production EUDI Wallet. It is free software, provided **AS IS**, with **no warranty** and **no liability** for bugs, data loss, or misuse (see [Licenses](#licenses)).
 
 ## Standards covered
 
@@ -40,6 +40,28 @@ Demo officer credentials (change before any non-local use):
 
 - Username: `officer`
 - Password: `eudi-officer-2026`
+
+## Screenshots
+
+The officer UI is a static page at `/`. Sign in, fill CIR/ARF fields (or load the built-in sample), then issue.
+
+### Sign-in
+
+The homepage shows the officer form. Demo credentials are already filled in.
+
+![Officer sign-in](docs/screenshots/01-login.jpg)
+
+### Officer desk
+
+After sign-in, **Issue PID** shows the field list on the left, the current section in the centre, and a live **European Union · PID** preview on the right. Tabs also open the issued registry and the PID data dictionary.
+
+![Officer desk after sign-in](docs/screenshots/02-officer-desk.jpg)
+
+### Issued PID
+
+A successful issue shows the holder name, document number, technical and administrative expiry, and downloads for the SD-JWT and the encrypted holder key. The recovery secret is shown only on this first response, on the **Holder key** tab.
+
+![Issued PID overview](docs/screenshots/03-issued-pid.jpg)
 
 ## How it works
 
@@ -133,14 +155,46 @@ Public: `GET /api/health`, `GET /api/meta`, `GET /catalog/vct?id=urn:eudi:pid:1`
 
 ## Licenses
 
-This project is licensed under the **Apache License 2.0**. Third-party libraries are limited to Apache-2.0 / MIT components:
+This repository is licensed under the **[Apache License 2.0](LICENSE)** (copyright 2026 nordlyse). That is the right licence for this project: it is free to use, copy, and modify, and it states that the software is delivered **AS IS**, without warranties of any kind, and that contributors are **not liable** for damages arising from use (Apache 2.0 §§ 7–8). Nobody is entitled to treat this desk as a certified PID Provider or to hold the authors responsible if issuance, crypto, or UI behaviour is wrong.
 
-- Spring Boot 3, Spring Security, Spring Validation — Apache 2.0
-- Log4j2 (replaces Logback) — Apache 2.0
-- Nimbus JOSE JWT — Apache 2.0
-- Jackson (JSON + CBOR) — Apache 2.0
+Use it only as a reference / teaching sample. You assume all risk.
 
-Tests use the Spring Boot test stack (JUnit is EPL 2.0). Coverage uses JaCoCo (EPL 2.0). Runtime issuance does not depend on either.
+Third-party licences below are those of the libraries this build actually pulls in (Maven, Spring Boot 3.5.5 BOM). Java 21 and Maven themselves are not redistributed.
+
+### Runtime (shipped with `mvn spring-boot:run`)
+
+| Component | Licence |
+| --- | --- |
+| Spring Boot 3.5, Spring Framework 6.2, Spring Security 6.5, Spring Web / WebMVC | Apache-2.0 |
+| Apache Tomcat Embed 10.1 (core, EL, WebSocket) | Apache-2.0 |
+| Jackson 2.19 (core, databind, annotations, JDK8, JSR-310, parameter-names, **CBOR**) | Apache-2.0 |
+| Apache Log4j2 2.24 | Apache-2.0 |
+| SLF4J API 2.0 | MIT |
+| SnakeYAML 2.4 | Apache-2.0 |
+| Micrometer Observation / Commons 1.15 | Apache-2.0 |
+| Hibernate Validator 8.0 | Apache-2.0 |
+| Jakarta Bean Validation API 3.0 | Apache-2.0 |
+| JBoss Logging, ClassMate | Apache-2.0 |
+| Nimbus JOSE JWT 10.4.2 | Apache-2.0 |
+| Jakarta Annotations API 2.1 | **EPL-2.0** or GPL-2.0-with-classpath-exception (dual) |
+
+### Test and coverage only (not required to issue a PID)
+
+| Component | Licence |
+| --- | --- |
+| JUnit Jupiter 5 / JUnit Platform | EPL-2.0 |
+| JaCoCo 0.8 (Maven plugin) | EPL-2.0 |
+| Mockito 5 | MIT |
+| AssertJ, Awaitility, Byte Buddy, Objenesis, ApiGuardian, OpenTest4J, XMLUnit, JSONAssert, JSON Path, json-smart | Apache-2.0 |
+| Hamcrest 3 | BSD-3-Clause |
+| OW2 ASM | BSD-3-Clause |
+| Jakarta XML Binding API, Jakarta Activation API | Eclipse Distribution License 1.0 (BSD-3-style) |
+| Vaadin `android-json` (JSONAssert transitive) | Apache-2.0 |
+| Maven Surefire plugin | Apache-2.0 |
+
+The officer UI is static HTML/CSS/JS in this repo (system fonts only; no Google Fonts).
+
+Full Apache 2.0 text: [`LICENSE`](LICENSE). Third-party notices: [`NOTICE`](NOTICE).
 
 ## Configuration
 
