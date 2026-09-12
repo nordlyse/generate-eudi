@@ -94,7 +94,7 @@ The holder PID private key must not be used to sign transactional data (PID Rule
 2. Validate CIR/ARF fields (ISO country codes, sex vocabulary 0/1/2/3/4/5/6/9, JPEG portrait or PID_03 opt-out, jurisdiction prefix, at least one `place_of_birth` member).
 3. Build a `PidDocument`. Derive `age_in_years`, `age_birth_year`, and `age_equal_or_over.{12,14,16,18,21,65}` from `birth_date`.
 4. Generate an EC P-256 holder key. Put only the public JWK in `cnf`. Wrap the private JWK as JWE; return the wrapping key **once**.
-5. Hash salted disclosures, sign the SD-JWT with the issuer P-256 key (**ES256**). The issuer JWK is created on first run at `data/issuer-ec-p256.jwk.json`.
+5. Hash salted disclosures, sign the SD-JWT with the issuer P-256 key (**ES256**). The issuer JWK is added on first run at `data/issuer-ec-p256.jwk.json`.
 6. Encode the same document as an mdoc-aligned map and CBOR hex.
 7. Allocate a Token Status List index, persist the artefacts, append an `ISSUE` audit row.
 
@@ -120,7 +120,7 @@ Mandatory CIR attributes: `family_name`, `given_name`, `birth_date`, `birth_plac
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/api/auth/login` | Create officer session |
+| POST | `/api/auth/login` | Add officer session |
 | GET | `/api/pid/schema` | Full PID field catalogue |
 | POST | `/api/pid` | Issue PID + encrypted holder key |
 | GET | `/api/pid` | Session registry |

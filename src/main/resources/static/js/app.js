@@ -386,7 +386,7 @@ function sectionForm() {
         `,
         review: `
             <h3>Review & issue</h3>
-            <p class="hint">Issuing creates an SD-JWT VC, an mdoc-aligned CBOR payload, a holder P-256 key bound in cnf.jwk, and an AES-256-GCM wrapped private key unique to this user.</p>
+            <p class="hint">Issuing adds an SD-JWT VC, an mdoc-aligned CBOR payload, a holder P-256 key bound in cnf.jwk, and an AES-256-GCM wrapped private key unique to this user.</p>
             <p class="error">${escapeHtml(state.error)}</p>
             <div class="actions">
                 <button class="btn" id="issue" type="button">Issue encrypted EUDI PID</button>

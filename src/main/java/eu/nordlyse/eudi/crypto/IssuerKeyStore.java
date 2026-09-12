@@ -20,7 +20,7 @@ public class IssuerKeyStore {
     private final ECKey issuerKey;
 
     public IssuerKeyStore(EudiProperties properties) {
-        this.issuerKey = loadOrCreate(Path.of(properties.issuerKeyFile()));
+        this.issuerKey = loadOrAdd(Path.of(properties.issuerKeyFile()));
     }
 
     public ECKey issuerKey() {
@@ -31,7 +31,7 @@ public class IssuerKeyStore {
         return issuerKey.toPublicJWK();
     }
 
-    private static ECKey loadOrCreate(Path path) {
+    private static ECKey loadOrAdd(Path path) {
         try {
             if (Files.exists(path)) {
                 return ECKey.parse(Files.readString(path));
@@ -43,7 +43,7 @@ public class IssuerKeyStore {
                     .secureRandom(new SecureRandom())
                     .generate();
             Files.writeString(path, generated.toJSONString());
-            log.info("Created PID provider signing key at {}", path.toAbsolutePath());
+            log.info("Added PID provider signing key at {}", path.toAbsolutePath());
             return generated;
         } catch (IOException | java.text.ParseException | com.nimbusds.jose.JOSEException ex) {
             throw new IllegalStateException("Unable to initialise PID provider signing key", ex);
